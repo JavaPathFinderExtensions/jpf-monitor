@@ -15,16 +15,24 @@ public class JPFMonitor extends PropertyListenerAdapter {
     String msg;
     private State currentState;
     private State initialState;
-    private HashSet<State> finalStates;
     private HashSet<State> allStates;
 
-
-
-    public JPFMonitor (Config config, HashSet<State> allStates,State initialState) {
-        this.allStates = allStates;
-        this.initialState = initialState;
-
+    public JPFMonitor (Config config) {
     }
+
+    public JPFMonitor (Config config, String[] allStates ,State initialState) {
+        for (String s: allStates) {
+            this.allStates.add(new State(s));
+        }
+        this.initialState = initialState;
+    }
+
+    public JPFMonitor addTransition(State sourceState, State destState, Event event ) {
+        assert (allStates.contains(sourceState));
+        assert (allStates.contains(destState));
+        sourceState.eventHandler.put(event, destState);
+    }
+
 
     @Override
     public boolean check(Search search, VM vm) {

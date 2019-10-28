@@ -1,10 +1,15 @@
 package gov.nasa.jpf.listener.monitor;
 
+import java.util.HashMap;
+
 public class State {
     private String name;
+    protected HashMap<Event, State> eventHandler;
+
 
     public State(String name) {
         this.name = name;
+        this.eventHandler = new HashMap<>();
     }
 
     public String getName() {
