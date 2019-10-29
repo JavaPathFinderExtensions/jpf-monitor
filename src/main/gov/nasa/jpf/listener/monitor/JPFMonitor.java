@@ -14,25 +14,55 @@ public class JPFMonitor extends PropertyListenerAdapter {
 
     String msg;
     private State currentState;
-    private State initialState;
     private HashSet<State> allStates;
+    private PropertyMonitor checkingProperty;
 
-    public JPFMonitor (Config config) {
-    }
-
-    public JPFMonitor (Config config, String[] allStates ,State initialState) {
-        for (String s: allStates) {
-            this.allStates.add(new State(s));
-        }
-        this.initialState = initialState;
+    public JPFMonitor (Config config, HashSet<State> allStates, State initialState) {
+        this.allStates = allStates;
+        this.currentState = initialState;
     }
 
     public JPFMonitor addTransition(State sourceState, State destState, Event event ) {
         assert (allStates.contains(sourceState));
         assert (allStates.contains(destState));
-        sourceState.eventHandler.put(event, destState);
+        if (event != null) {
+            sourceState.eventHandler.put(event, destState);
+        }
+        return this;
     }
 
+    public JPFMonitor addCheckingProperty(PropertyMonitor property) {
+        this.checkingProperty = property;
+        return this;
+    }
+
+
+    private void handleEvent(Event event) {
+        if (currentState.eventHandler.containsKey(event)) {
+            State nextState = currentState.eventHandler.get(event);
+            if (!this.checkingProperty.isActivated()) {
+                if (nextState.equals(checkingProperty.getStartingState())) { // enter property monitor
+                    checkingProperty.activate();
+                    if (!checkingProperty.check(nextState)) {
+                        reportPropertyViolation();
+                        return;
+                    }
+                } // nothing bad happened, make the transition
+                currentState = nextState;
+            }
+            else { // already in property monitor
+                if (!checkingProperty.check(nextState)) {
+                    reportPropertyViolation();
+                    return;
+                }
+                currentState = nextState;
+            }
+        }
+    }
+
+    protected void reportPropertyViolation (){
+        this.msg = "property specification violated:\n";
+    }
 
     @Override
     public boolean check(Search search, VM vm) {
@@ -44,28 +74,15 @@ public class JPFMonitor extends PropertyListenerAdapter {
         return msg;
     }
 
-    protected String getMessage (String details, Instruction insn){
-        String s = "failed assertion";
-
-        if (details != null){
-            s += ": \"";
-            s += details;
-            s += '"';
-        }
-
-        s += " at ";
-        s += insn.getSourceLocation();
-
-        return s;
-    }
-
     @Override
-    public void executeInstruction (VM vm, ThreadInfo ti, Instruction insn){
-
+    public void methodEntered(VM vm, ThreadInfo currentThread, MethodInfo enteredMethod) {
+        this.handleEvent(new Event(Event.Trigger.METHODCALL, enteredMethod.getName()));
     }
+
 
     @Override
     public void reset() {
         msg = null;
+        checkingProperty.deactivate();
     }
 }
