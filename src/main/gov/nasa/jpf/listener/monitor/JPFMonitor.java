@@ -38,6 +38,7 @@ public class JPFMonitor extends PropertyListenerAdapter {
 
 
     private void handleEvent(Event event) {
+        //System.out.println("received event: " + event);
         if (currentState.eventHandler.containsKey(event)) {
             State nextState = currentState.eventHandler.get(event);
             if (!this.checkingProperty.isActivated()) {
@@ -61,7 +62,7 @@ public class JPFMonitor extends PropertyListenerAdapter {
     }
 
     protected void reportPropertyViolation (){
-        this.msg = "property specification violated:\n";
+        this.msg = "property specification violated";
     }
 
     @Override

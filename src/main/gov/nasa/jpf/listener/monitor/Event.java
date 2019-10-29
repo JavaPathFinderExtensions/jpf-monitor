@@ -33,7 +33,7 @@ public class Event {
         return triggerType.toString() + "-" + triggerName;
     }
 
-    enum Trigger
+    public enum Trigger
     {
         METHODCALL;
         // waiting to be added

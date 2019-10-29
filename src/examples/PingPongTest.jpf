@@ -1,0 +1,3 @@
+classpath=../out/production/jpf-monitor/
+target=PingPongTest
+report.console.show_code=true
